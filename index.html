@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empecemos a repasar: Evaluación</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --hacker-green: #00FF41;
+            --hacker-dark: #0D0208;
+            --glass-hacker: rgba(0, 20, 0, 0.85);
+            --border-hacker: rgba(0, 255, 65, 0.3);
+            --alert-red: #FF3B30;
+            --warning-orange: #FF9500;
+        }
+
+        body {
+            margin: 0; padding: 20px;
+            background-color: var(--hacker-dark);
+            color: var(--hacker-green);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; overflow: hidden;
+        }
+
+        #matrix-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+        }
+
+        #game-container {
+            background: var(--glass-hacker);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 35px; border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+            width: 100%; max-width: 500px; text-align: center;
+            border: 1px solid var(--border-hacker);
+            position: relative;
+        }
+
+        .hidden { display: none; }
+
+        input {
+            padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--hacker-green);
+            width: 85%; font-size: 1.1rem; background: rgba(0,0,0,0.8);
+            color: var(--hacker-green); text-align: center; outline: none;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .btn {
+            background: transparent; color: var(--hacker-green); border: 1px solid var(--hacker-green);
+            padding: 16px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px;
+            font-weight: 600; font-size: 1.1rem; transition: all 0.3s ease;
+            text-transform: uppercase; letter-spacing: 1px; font-family: 'Courier New', Courier, monospace;
+        }
+
+        .btn:hover {
+            background: var(--hacker-green); color: var(--hacker-dark);
+            box-shadow: 0 0 15px var(--hacker-green);
+        }
+
+        .level-tag {
+            display: inline-block; padding: 6px 15px; border-radius: 4px;
+            background: var(--hacker-green); color: var(--hacker-dark);
+            font-size: 0.85rem; font-weight: bold; margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        #timer { font-size: 3.5rem; font-weight: bold; color: var(--alert-red); margin: 10px 0; text-shadow: 0 0 8px rgba(255, 59, 48, 0.5); }
+
+        .emoji-box { font-size: 3.5rem; margin: 10px 0; }
+
+        .opt-btn { 
+            background: rgba(0, 30, 0, 0.7); color: var(--hacker-green); border: 1px solid var(--border-hacker); 
+            margin-bottom: 10px; text-align: left; padding: 16px; font-weight: normal;
+            font-family: 'Courier New', Courier, monospace; border-radius: 6px; width: 100%;
+        }
+        
+        .opt-btn:hover { border-color: var(--hacker-green); background: rgba(0, 60, 0, 0.8); }
+
+        .swal-hacker {
+            background: #0a0a0a !important;
+            color: var(--hacker-green) !important;
+            border: 1px solid var(--hacker-green) !important;
+        }
+        .swal-text-left { text-align: left !important; font-family: 'Courier New', Courier, monospace; }
+    </style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<div id="game-container">
+    <div id="login">
+        <div class="emoji-box">🛡️</div>
+        <h1 style="color: var(--hacker-green); margin: 0;">CYBER_SECURITY_V3</h1>
+        <p style="color: var(--hacker-green); opacity: 0.8; margin-bottom: 25px;">[ Módulo: Concienciación y Amenazas ]</p>
+        <input type="text" id="nombre" placeholder="🆔 NOMBRE">
+        <input type="text" id="apellido" placeholder="🆔 APELLIDO">
+        <button class="btn" onclick="startQuiz()">▶️ INICIAR PROTOCOLO</button>
+    </div>
+
+    <div id="quiz" class="hidden">
+        <div id="level-indicator" class="level-tag">🔓 NIVEL: BÁSICO</div>
+        <div class="emoji-box" id="game-emoji">🛡️</div>
+        <div id="timer">180</div>
+        <h2 id="question-text" style="color: var(--hacker-green); font-size: 1.1rem; margin-bottom: 25px;"></h2>
+        <div id="options"></div>
+    </div>
+</div>
+
+<script>
+    // --- EFECTO MATRIX ---
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const characters = "0101010101010101";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#00FF41";
+        ctx.font = fontSize + "px 'Courier New'";
+        for (let i = 0; i < drops.length; i++) {
+            const text = characters.charAt(Math.floor(Math.random() * characters.length));
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        }
+    }
+    setInterval(drawMatrix, 35);
+
+    // --- LÓGICA DEL EXAMEN ---
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzImjlTsteO1Rlqle2JkgAJBvetUzhrTAwZ1nXKVMJyJM9MPwNDo20d19523_FT5cFcXg/exec'; 
+    let nombre, apellido, score = 0, currentQ = 0, timer, timeLeft;
+
+    const questions = [
+        // NIVEL 1: CONCEPTOS Y PHISHING
+        { q: "¿Cuál es el eslabón más débil en la cadena de seguridad de la información?", a: ["Los Firewalls", "El usuario final (el ser humano)", "Los servidores"], c: 1, exp: "El ser humano es considerado el eslabón más débil debido a la manipulación mediante ingeniería social." },
+        { q: "¿Qué busca principalmente el 'Phishing'?", a: ["Dañar físicamente el disco duro", "Robar credenciales y datos mediante engaños", "Aumentar la velocidad de internet"], c: 1, exp: "El Phishing suplanta la identidad de empresas para que el usuario entregue sus datos voluntariamente." },
+        { q: "¿Qué técnica de ingeniería social utiliza el teléfono para engañar a las víctimas?", a: ["Vishing", "Smishing", "Pharming"], c: 0, exp: "Vishing proviene de 'Voice Phishing' (estafas por llamadas de voz)." },
+        { q: "Si recibes un SMS sospechoso con un link de 'paquete retenido', ¿cómo se llama esta amenaza?", a: ["Bluetooth Hijacking", "Smishing", "Email Spoofing"], c: 1, exp: "El Smishing es el phishing realizado a través de mensajes de texto (SMS)." },
+        { q: "¿Cuál es una señal clara de un correo de Phishing?", a: ["Remitente con dominio extraño y urgencia extrema", "Uso de colores institucionales", "Firma del departamento técnico"], c: 0, exp: "Los atacantes usan la urgencia (miedo) y direcciones de correo que parecen reales pero no lo son." },
+        { q: "¿Qué es el 'Shoulder Surfing'?", a: ["Navegar en la playa", "Mirar por encima del hombro para ver contraseñas", "Hackear una red Wi-Fi"], c: 1, exp: "Es una técnica física de ingeniería social para obtener información mirando discretamente lo que el usuario escribe." },
+        { q: "¿Qué significa el prefijo 'HTTPS' en una URL?", a: ["Hipertexto Simple", "Conexión segura y cifrada", "Página web de alta velocidad"], c: 1, exp: "La 'S' indica que la comunicación entre tu navegador y el servidor está cifrada." },
+        { q: "¿Cuál es la mejor acción ante un correo sospechoso de un banco?", a: ["Hacer clic para ver si es real", "Ignorar y contactar al banco por medios oficiales", "Responder pidiendo que dejen de molestar"], c: 1, exp: "Nunca se debe interactuar con el enlace; siempre se debe verificar por canales oficiales." },
+        { q: "¿Qué es el 'Baiting'?", a: ["Dejar un USB infectado en un lugar público", "Enviar correos masivos", "Robar cables de red"], c: 0, exp: "El Baiting (cebo) usa la curiosidad de la víctima dejando un dispositivo físico para que lo conecten a su red." },
+        { q: "¿Qué busca la 'Ingeniería Social'?", a: ["Programar virus complejos", "Manipular psicológicamente a las personas", "Arreglar computadoras"], c: 1, exp: "Se basa en el arte de convencer a la gente para que revele secretos o viole protocolos de seguridad." },
+
+        // NIVEL 2: MALWARE Y CONTRASEÑAS
+        { q: "¿Qué hace el 'Ransomware'?", a: ["Borra todos los archivos", "Secuestra/Cifra datos y pide un rescate", "Muestra publicidad molesta"], c: 1, exp: "El Ransomware bloquea el acceso a tus archivos y exige un pago (usualmente en criptomonedas) para liberarlos." },
+        { q: "¿Cuál es una característica de una contraseña SEGURA?", a: ["Usar el nombre de tu mascota", "Mínimo 12 caracteres, símbolos, números y letras", "Usar '12345678'"], c: 1, exp: "La complejidad y la longitud son claves para resistir ataques de fuerza bruta." },
+        { q: "¿Qué es el MFA (Autenticación de Múltiples Factores)?", a: ["Un virus doble", "Una capa extra de seguridad (ej. código al móvil)", "Tener dos monitores"], c: 1, exp: "El MFA requiere dos o más pruebas de identidad antes de acceder a una cuenta." },
+        { q: "¿Qué es un 'Keylogger'?", a: ["Un programa que registra cada tecla pulsada", "Un tipo de monitor", "Un gestor de archivos"], c: 0, exp: "Los Keyloggers capturan contraseñas y mensajes registrando lo que escribes en el teclado." },
+        { q: "Si encuentras una oferta en internet 'demasiado buena para ser verdad', probablemente sea:", a: ["Un regalo del ISP", "Un fraude o campaña de malware", "Una promoción exclusiva de Google"], c: 1, exp: "Las ofertas irreales son el cebo común para estafas y distribución de virus." },
+        { q: "¿Por qué NO debes usar la misma contraseña en todos lados?", a: ["Porque es difícil de recordar", "Si hackean un sitio, tendrán acceso a todas tus cuentas", "Porque el navegador se bloquea"], c: 1, exp: "El efecto dominó permite que un solo hackeo comprometa toda tu vida digital." },
+        { q: "¿Qué es el 'Pretexting'?", a: ["Enviar un virus por correo", "Crear un escenario falso para obtener información", "Actualizar el sistema operativo"], c: 1, exp: "El atacante finge una situación (ej: soy del soporte técnico) para ganar confianza." },
+        { q: "¿Qué software ayuda a detectar y eliminar programas maliciosos?", a: ["Excel", "Antivirus / EDR", "Adobe Reader"], c: 1, exp: "Las soluciones de seguridad detectan firmas y comportamientos de malware conocido." },
+        { q: "¿Qué es el 'Whaling'?", a: ["Pescar ballenas", "Phishing dirigido a altos ejecutivos (CEOs)", "Ataques a servidores de gran tamaño"], c: 1, exp: "Es un tipo de phishing de 'caza mayor' dirigido a personas con mucho poder en una empresa." },
+        { q: "¿Cuál es el riesgo de usar Wi-Fi públicas (aeropuertos, cafés)?", a: ["No tienen internet", "Los datos pueden ser interceptados por terceros", "Son muy lentas"], c: 1, exp: "En redes públicas, un atacante puede posicionarse en medio (Man-in-the-Middle) y ver tu tráfico." },
+
+        // NIVEL 3: PROCEDIMIENTOS Y SEGURIDAD AVANZADA
+        { q: "¿Qué se debe hacer antes de conectar un dispositivo externo (USB) a la red corporativa?", a: ["Abrirlo inmediatamente", "Escanearlo con un antivirus", "Formatearlo sin mirar"], c: 1, exp: "El escaneo previo es vital para prevenir la entrada de malware por medios físicos." },
+        { q: "En ciberseguridad, ¿qué es un 'Insider Threat'?", a: ["Un hacker externo", "Una amenaza que viene desde dentro de la empresa", "Un virus de internet"], c: 1, exp: "Puede ser un empleado descontento o simplemente alguien descuidado que compromete la seguridad." },
+        { q: "¿Qué significa 'Cifrado de datos'?", a: ["Borrar datos", "Ocultar datos bajo un código que solo el receptor puede leer", "Hacer copias de seguridad"], c: 1, exp: "El cifrado vuelve la información ilegible para quien no tenga la clave de descifrado." },
+        { q: "¿Cuál es el primer paso si sospechas que tu equipo está infectado con Ransomware?", a: ["Pagar el rescate rápido", "Desconectarlo de la red inmediatamente", "Apagar el monitor y esperar"], c: 1, exp: "Aislar el equipo evita que el ransomware se propague a otros servidores y computadoras de la red." },
+        { q: "¿Para qué sirve un 'Gestor de Contraseñas'?", a: ["Para compartirlas con amigos", "Para almacenar y generar claves robustas de forma segura", "Para hackear cuentas"], c: 1, exp: "Permite tener contraseñas únicas y complejas para cada sitio sin tener que memorizarlas todas." },
+        { q: "¿Qué es el 'Shadow IT'?", a: ["Usar software no autorizado por el departamento de IT", "Hackear en la oscuridad", "Instalar antivirus piratas"], c: 0, exp: "El uso de apps o servicios externos sin control de la empresa crea brechas de seguridad críticas." },
+        { q: "¿Qué principio dice que un usuario solo debe tener acceso a lo necesario para su trabajo?", a: ["Principio de Confianza", "Principio de Menor Privilegio", "Principio de Libertad"], c: 1, exp: "Limitar los permisos reduce el daño potencial en caso de que una cuenta sea comprometida." },
+        { q: "¿Qué es el 'Tailgating'?", a: ["Seguir a alguien físicamente a una zona restringida", "Enviar correos basura", "Robar cables de red"], c: 0, exp: "Es entrar a un lugar seguro aprovechando que alguien más abrió la puerta con su credencial." },
+        { q: "¿Por qué las actualizaciones de software son CRÍTICAS para la seguridad?", a: ["Solo para tener nuevas funciones", "Corrigen vulnerabilidades que los hackers explotan", "Para que el PC no vaya lento"], c: 1, exp: "Muchos ataques aprovechan fallos que ya tienen parches disponibles, pero que el usuario no ha instalado." },
+        { q: "¿Qué es la 'Cultura de Ciberseguridad'?", a: ["Saber programar en Python", "La responsabilidad compartida de proteger la información", "Tener un buen firewall"], c: 1, exp: "La seguridad no es solo de IT; es una actitud y conocimiento compartido por todos los empleados." }
+    ];
+
+    function startQuiz() {
+        nombre = document.getElementById('nombre').value.trim();
+        apellido = document.getElementById('apellido').value.trim();
+        if(!nombre || !apellido) return Swal.fire({ title: 'ERROR', text: 'Ingresa credenciales.', icon: 'error', customClass: { popup: 'swal-hacker' } });
+        document.getElementById('login').classList.add('hidden');
+        document.getElementById('quiz').classList.remove('hidden');
+        showQuestion();
+    }
+
+    async function showQuestion() {
+        if(currentQ >= questions.length) return endQuiz();
+        
+        // Cambios de nivel
+        if (currentQ === 10) {
+            document.getElementById('level-indicator').innerText = "🛡️ NIVEL: INTERMEDIO";
+            document.getElementById('level-indicator').style.background = "var(--warning-orange)";
+            await Swal.fire({ title: 'LEVEL_UP', text: 'Entrando a Malware y Contraseñas.', icon: 'info', customClass: { popup: 'swal-hacker' } });
+        } else if (currentQ === 20) {
+            document.getElementById('level-indicator').innerText = "⚠️ NIVEL: AVANZADO";
+            document.getElementById('level-indicator').style.background = "var(--alert-red)";
+            await Swal.fire({ title: 'CRITICAL', text: 'Fase de Procedimientos y Seguridad Corporativa.', icon: 'warning', customClass: { popup: 'swal-hacker' } });
+        }
+
+        timeLeft = 30; // 30 segundos por pregunta para hacerlo más dinámico
+        document.getElementById('timer').innerText = timeLeft;
+        document.getElementById('question-text').innerText = `[Q-${(currentQ+1).toString().padStart(2, '0')}] ${questions[currentQ].q}`;
+        
+        const opts = document.getElementById('options');
+        opts.innerHTML = '';
+        questions[currentQ].a.forEach((opt, i) => {
+            const b = document.createElement('button');
+            b.className = 'opt-btn';
+            b.innerText = `> ${opt}`;
+            b.onclick = () => check(i);
+            opts.appendChild(b);
+        });
+
+        clearInterval(timer);
+        timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+            if(timeLeft <= 0) check(-1);
+        }, 1000);
+    }
+
+    async function check(idx) {
+        clearInterval(timer);
+        const isCorrect = idx === questions[currentQ].c;
+        if(isCorrect) score += (timeLeft * 5) + 100;
+
+        await Swal.fire({
+            title: isCorrect ? 'SISTEMA SEGURO' : 'BRECHA DETECTADA',
+            html: `<div class="swal-text-left"><b>Respuesta:</b> ${questions[currentQ].a[questions[currentQ].c]}<br><br><b>Análisis:</b> ${questions[currentQ].exp}</div>`,
+            icon: isCorrect ? 'success' : 'error',
+            confirmButtonText: 'SIGUIENTE',
+            customClass: { popup: 'swal-hacker' }
+        });
+
+        currentQ++;
+        showQuestion();
+    }
+
+    function endQuiz() {
+        const container = document.getElementById('quiz');
+        container.innerHTML = "<h2>ENVIANDO RESULTADOS...</h2>";
+        
+        let formData = new FormData();
+        formData.append('nombre', nombre);
+        formData.append('apellido', apellido);
+        formData.append('puntos', score);
+
+        fetch(scriptURL, { method: 'POST', body: formData })
+        .then(() => {
+            container.innerHTML = `
+                <h1 style="color:var(--hacker-green)">LOG_COMPLETED</h1>
+                <p>Agente: ${nombre} ${apellido}</p>
+                <p style="font-size: 2rem;">SCORE: ${score}</p>
+                <button class="btn" onclick="location.reload()">REINICIAR</button>
+            `;
+        })
+        .catch(() => {
+            container.innerHTML = `<h2>ERROR DE RED</h2><p>Puntos: ${score}</p>`;
+        });
+    }
+</script>
+</body>
+</html>
